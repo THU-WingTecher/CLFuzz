@@ -1,4 +1,4 @@
-all : cryptofuzz generate_dict generate_corpus
+all : clfuzz
 
 CXXFLAGS += -Wall -Wextra -std=c++17 -I include/ -I . -I fuzzing-headers/include -DFUZZING_HEADERS_NO_IMPL
 
@@ -32,8 +32,8 @@ input_generator.o : input_generator.cpp config.h
 	$(CXX) $(CXXFLAGS) input_generator.cpp -c -o input_generator.o
 numbers.o : numbers.cpp
 	$(CXX) $(CXXFLAGS) -O0 numbers.cpp -c -o numbers.o
-mutatorpool.o : mutatorpool.cpp
-	$(CXX) $(CXXFLAGS) mutatorpool.cpp -c -o mutatorpool.o
+recyclepool.o : recyclepool.cpp
+	$(CXX) $(CXXFLAGS) recyclepool.cpp -c -o recyclepool.o
 ecc_diff_fuzzer_importer.o : ecc_diff_fuzzer_importer.cpp
 	$(CXX) $(CXXFLAGS) ecc_diff_fuzzer_importer.cpp -c -o ecc_diff_fuzzer_importer.o
 botan_importer.o : botan_importer.cpp
@@ -42,18 +42,12 @@ botan_importer.o : botan_importer.cpp
 third_party/cpu_features/build/libcpu_features.a :
 	cd third_party/cpu_features && rm -rf build && mkdir build && cd build && cmake .. && make
 
-cryptofuzz : driver.o executor.o util.o entry.o tests.o operation.o datasource.o repository.o options.o components.o wycheproof.o crypto.o input_generator.o numbers.o mutatorpool.o ecc_diff_fuzzer_importer.o botan_importer.o third_party/cpu_features/build/libcpu_features.a
+clfuzz : driver.o executor.o util.o entry.o tests.o operation.o datasource.o repository.o options.o components.o wycheproof.o crypto.o input_generator.o numbers.o recyclepool.o ecc_diff_fuzzer_importer.o botan_importer.o third_party/cpu_features/build/libcpu_features.a
 	test $(LIBFUZZER_LINK)
-	$(CXX) $(CXXFLAGS) driver.o executor.o util.o entry.o tests.o operation.o datasource.o repository.o options.o components.o wycheproof.o crypto.o input_generator.o numbers.o mutatorpool.o ecc_diff_fuzzer_importer.o botan_importer.o $(shell find modules -type f -name module.a) $(LIBFUZZER_LINK) third_party/cpu_features/build/libcpu_features.a $(LINK_FLAGS) -o cryptofuzz
-
-generate_dict: generate_dict.cpp
-	$(CXX) $(CXXFLAGS) generate_dict.cpp -o generate_dict
-
-generate_corpus: generate_corpus.cpp
-	$(CXX) $(CXXFLAGS) generate_corpus.cpp -o generate_corpus
+	$(CXX) $(CXXFLAGS) driver.o executor.o util.o entry.o tests.o operation.o datasource.o repository.o options.o components.o wycheproof.o crypto.o input_generator.o numbers.o recyclepool.o ecc_diff_fuzzer_importer.o botan_importer.o $(shell find modules -type f -name module.a) $(LIBFUZZER_LINK) third_party/cpu_features/build/libcpu_features.a $(LINK_FLAGS) -o clfuzz
 
 clean:
-	rm -rf driver.o executor.o util.o entry.o operation.o tests.o datasource.o repository.o options.o components.o wycheproof.o crypto.o numbers.o mutatorpool.o mutator.o ecc_diff_fuzzer_importer.o botan_importer.o cryptofuzz emptyResultCount.txt validResultCount.txt executionCount.txt runningCount.txt getModuleCount.txt getUnexistedModuleCount.txt getValidModuleCount.txt enterRunningCount.txt
+	rm -rf driver.o executor.o util.o entry.o operation.o tests.o datasource.o repository.o options.o components.o wycheproof.o crypto.o numbers.o recyclepool.o mutator.o ecc_diff_fuzzer_importer.o botan_importer.o cryptofuzz emptyResultCount.txt validResultCount.txt executionCount.txt runningCount.txt getModuleCount.txt getUnexistedModuleCount.txt getValidModuleCount.txt enterRunningCount.txt
 
 cleanTxtMarks:
 	rm -rf emptyResultCount.txt executionCount.txt runningCount.txt getModuleCount.txt getUnexistedModuleCount.txt getValidModuleCount.txt enterRunningCount.txt validResultCount.txt saved_seeds/*
